@@ -1,4 +1,10 @@
-﻿【小狼毫】輸入法
+﻿> **本分支（`master`）說明**
+>
+> 本分支是 **小狼毫 Weasel —— Rime 輸入法的 Windows 前端**（C++ / MSVC / Windows TSF）。
+>
+> 同倉庫內還有另一個長期並行分支 **`origin/squirrel`**，對應 **macOS 前端：鼠鬚管 Squirrel**（Swift / Xcode）。兩者無共同祖先、屬於獨立項目，**不應互相合併**。詳見 [BRANCH.md](./BRANCH.md)。
+
+【小狼毫】輸入法
 ================
 
 基於 中州韻輸入法引擎／Rime Input Method Engine 等開源技術
