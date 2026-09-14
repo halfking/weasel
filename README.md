@@ -1,3 +1,9 @@
+> **本分支（`squirrel`）說明**
+>
+> 本分支是 **鼠鬚管 Squirrel —— Rime 輸入法的 macOS 前端**（Objective-C / Swift / Xcode）。
+>
+> 同倉庫內還有另一個長期並行分支 **`origin/master`**，對應 **Windows 前端：小狼毫 Weasel**（C++ / MSVC / Windows TSF）。兩者無共同祖先、屬於獨立項目，**不應互相合併**。詳見 [BRANCH.md](./BRANCH.md)。
+
     鼠鬚管
     爲物雖微情不淺
     新詩醉墨時一揮
