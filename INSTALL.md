@@ -1,90 +1,184 @@
-# How to Rime with Weasel
+# How to Rime with Squirrel
 
-## Preparation
+> Instructions to build Squirrel - the Rime frontend for macOS
 
-  - Install **Visual Studio 2017** for *Desktop development in C++*
-    with components *ATL*, *MFC* and *Windows XP support*.
-    Visual Studio 2015 or later versions may work with additional configuration.
+## Manually build and install Squirrel
 
-  - Install dev tools: `git`, `cmake`， `clang-format(>=17.0.6)`
+### Prerequisites
 
-  - Download third-party libraries: `boost(>=1.60.0)`
+Install **Xcode 14.0** or above from App Store, to build Squirrel as a Universal
+app.
 
-Optional:
+Install **cmake**.
 
-  - install `bash` via *Git for Windows*, for installing data files with `plum`;
-  - install `python` for building OpenCC dictionaries;
-  - install [NSIS](http://nsis.sourceforge.net/Download) for creating installer.
+Download from https://cmake.org/download/
 
-## Checkout source code
+or install from [Homebrew](http://brew.sh/):
 
-Make sure all git submodules are checked out recursively.
-
-```batch
-git clone --recursive https://github.com/rime/weasel.git
+``` sh
+brew install cmake
 ```
 
-## Build and Install Weasel
+or install from [MacPorts](https://www.macports.org/):
 
-Locate `weasel` source directory.
-
-### Setup build environment
-
-Edit your build environment settings in `env.bat`.
-You can create the file by copying `env.bat.template` in the source tree.
-
-Make sure `BOOST_ROOT` is set to the existing path `X:\path\to\boost_<version>`.
-
-When using a different version of Visual Studio or platform toolset, un-comment
-lines to set corresponding variables.
-
-Alternatively, start a *Developer Command Prompt* window and set environment
-variables directly in the console, before invocation of `build.bat`:
-
-```batch
-set BOOST_ROOT=X:\path\to\boost_N_NN_N
+``` sh
+port install cmake
 ```
 
-### Build
+### Checkout the code
 
-```batch
-cd weasel
-build.bat all
+``` sh
+git clone --recursive https://github.com/rime/squirrel.git
+
+cd squirrel
 ```
 
-Voila.
+Optionally, checkout Rime plugins (a list of GitHub repo slugs):
 
-Installer will be generated in `output\archives` directory.
-
-### Alternative: using prebuilt Rime binaries
-
-If you've already got a copy of prebuilt binaries of librime, you can simply
-copy `.dll`s / `.lib`s into `weasel\output` / `weasel\lib` directories
-respectively, then build Weasel without the `all` command line option.
-
-```batch
-build.bat boost data opencc
-build.bat weasel
+``` sh
+bash librime/install-plugins.sh rime/librime-sample # ...
 ```
 
-### Install and try it live
+Popular plugins include [librime-lua](https://github.com/hchunhui/librime-lua), [librime-octagram](https://github.com/lotem/librime-octagram) and [librime-predict](https://github.com/rime/librime-predict)
 
-```batch
-cd output
-install.bat
+### Shortcut: get the latest librime release
+
+You have the option to skip the following two sections - building Boost and
+librime, by downloading the latest librime binary from GitHub releases.
+
+``` sh
+bash ./action-install.sh
 ```
 
-### Optional: play with Rime command line tools
+When this is done, you may move on to [Build Squirrel](#build-squirrel).
 
-`librime` comes with a REPL application which can be used to test if the library
-is working.
+### Install Boost C++ libraries
 
-```batch
-cd librime
-copy /Y build\lib\Release\rime.dll build\bin
-cd build\bin
-echo zhongzhouyunshurufa | Release\rime_api_console.exe > output.txt
+Choose one of the following options.
+
+**Option:** Download and install from source.
+
+``` sh
+export BUILD_UNIVERSAL=1
+
+bash librime/install-boost.sh
+
+export BOOST_ROOT="$(pwd)/librime/deps/boost-1.84.0"
 ```
 
-Instead of redirecting output to a file, you can set appropriate code page
-(`chcp 65001`) and font in the console to work with the REPL interactively.
+Let's set `BUILD_UNIVERSAL` to tell `make` that we are building Boost as
+universal macOS binaries. Skip this if building only for the native architecture.
+
+After Boost source code is downloaded and a few compiled libraries are built,
+be sure to set shell variable `BOOST_ROOT` to its top level directory as above.
+
+You may also set `BOOST_ROOT` to an existing Boost source tree before this step.
+
+**Option:** Install the current version form Homebrew:
+
+``` sh
+brew install boost
+```
+
+**Note:** with this option, the built Squirrel.app is not portable because it
+links to locally installed libraries from Homebrew.
+
+Learn more about the implications of this at
+https://github.com/rime/librime/blob/master/README-mac.md#install-boost-c-libraries
+
+**Option:** Install from [MacPorts](https://www.macports.org/):
+
+``` sh
+port install boost -no_static
+```
+
+### Build Squirrel
+
+* Make sure you have updated all the dependencies. If you cloned squirrel with the command in this guide, you've already done it. But if not, this command will update submodules.
+
+```
+git submodule update --init --recursive
+```
+
+* There are a few environmental variables that you can define. Here's a list and possible values they may take:
+
+``` sh
+export BOOST_ROOT="path_to_boost" # required
+export DEV_ID="Your Apple ID name" # include this to codesign, optional
+export BUILD_UNIVERSAL=1 # set to build universal binary
+export PLUM_TAG=":preset” # or ":extra", optional, build with a set of plum formulae
+export ARCHS='arm64 x86_64' # optional, if not defined, only active arch is used
+export MACOSX_DEPLOYMENT_TARGET='13.0' # optional, lower version than 13.0 is not tested and may not work properly
+```
+
+* With all dependencies ready, build `Squirrel.app`:
+
+``` sh
+make
+```
+
+* You can either define the environment variables in your shell/terminal, or append them as arguments to the make command. For example:
+
+``` sh
+# for Universal macOS App
+make ARCHS='arm64 x86_64' BUILD_UNIVERSAL=1
+```
+
+## Install it on your Mac
+
+### Make Package
+
+Just add `package` after `make`
+
+```
+make package ARCHS='arm64'
+```
+
+Define `DEV_ID` to automatically handle code signing and [notarization](https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution) (Apple Developer ID needed)
+
+To make this work, you need a `Developer ID Installer: (your name/org)` and set your name/org as `DEV_ID` env variable. 
+
+To make notarization work, you also need to save your credential under the same name as above.
+
+```
+xcrun notarytool store-credentials 'your name/org'
+```
+
+You **don't** need to define `DEV_ID` if you don't intend to distribute the package.
+
+### Directly Install
+
+**You might need to precede with sudo, and without a logout, the App might not work properly. Direct install is not very recommended.**
+
+Once built, you can install and try it live on your Mac computer:
+
+``` sh
+# Squirrel as a Universal app
+make install
+```
+
+## Clean Up Artifacts
+
+After installation or after a failed attempt, you may want to start over. Before you do so, **make sure you have cleaned up artifacts from previous build.**
+
+To clean **Squirrel** artifacts, without touching dependencies, run:
+
+``` sh
+make clean
+```
+
+To clean up **dependencies**, including librime, librime plugins, plum and sparkle, run:
+
+``` sh
+make clean-deps
+```
+
+To clean up **packages**, run:
+
+``` sh
+make clean-package
+```
+
+If you want to clean all above, do all.
+
+That's it, a verbal journal. Thanks for riming with Squirrel.
