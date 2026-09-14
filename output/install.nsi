@@ -2,6 +2,7 @@
 !include FileFunc.nsh
 !include LogicLib.nsh
 !include MUI2.nsh
+!include nsDialogs.nsh
 !include x64.nsh
 !include winVer.nsh
 
@@ -48,6 +49,7 @@ RequestExecutionLevel admin
 
 !insertmacro MUI_PAGE_LICENSE "LICENSE.txt"
 !insertmacro MUI_PAGE_DIRECTORY
+Page custom OptionsPageCreate OptionsPageLeave
 !insertmacro MUI_PAGE_INSTFILES
 !insertmacro MUI_PAGE_FINISH
 
@@ -75,6 +77,10 @@ LangString LNKFORUNINSTALL ${LANG_TRADCHINESE} "卸載小狼毫"
 LangString CONFIRMATION ${LANG_TRADCHINESE} "安裝前，請先卸載舊版本的小狼毫。$\n$\n按下「確定」移除舊版本，按下「取消」放棄本次安裝。"
 LangString SYSTEMVERSIONNOTOK ${LANG_TRADCHINESE} "您的系统不被支持，最低系統要求:Windows 8.1!"
 LangString AUTOCHKUPDATE ${LANG_TRADCHINESE} "自動檢查版本更新？"
+LangString OPTPAGETITLE ${LANG_TRADCHINESE} "安裝選項"
+LangString OPTPAGESUBTITLE ${LANG_TRADCHINESE} "配置輸入法行為"
+LangString OPTLEFTSHIFT ${LANG_TRADCHINESE} "使用左 Shift 鍵切換中英文（建議）"
+LangString OPTLEFTSHIFTDESC ${LANG_TRADCHINESE} "勾選：單擊左 Shift 鍵在中/英文之間切換，右 Shift 不再觸發切換。$\n不勾選：左、右 Shift 鍵均可切換中英文（RIME 預設行為）。"
 
 !insertmacro MUI_LANGUAGE "SimpChinese"
 LangString DISPLAYNAME ${LANG_SIMPCHINESE} "小狼毫输入法"
@@ -92,6 +98,10 @@ LangString LNKFORUNINSTALL ${LANG_SIMPCHINESE} "卸载小狼毫"
 LangString CONFIRMATION ${LANG_SIMPCHINESE} '安装前，请先卸载旧版本的小狼毫。$\n$\n点击 "确定" 移除旧版本，或点击 "取消" 放弃本次安装。'
 LangString SYSTEMVERSIONNOTOK ${LANG_SIMPCHINESE} "您的系統不被支持，最低系统要求:Windows 8.1!"
 LangString AUTOCHKUPDATE ${LANG_SIMPCHINESE} "自动检查版本更新？"
+LangString OPTPAGETITLE ${LANG_SIMPCHINESE} "安装选项"
+LangString OPTPAGESUBTITLE ${LANG_SIMPCHINESE} "配置输入法行为"
+LangString OPTLEFTSHIFT ${LANG_SIMPCHINESE} "使用左 Shift 键切换中英文（推荐）"
+LangString OPTLEFTSHIFTDESC ${LANG_SIMPCHINESE} "勾选：单击左 Shift 键在中/英文之间切换，右 Shift 不再触发切换。$\n不勾选：左、右 Shift 键均可切换中英文（RIME 默认行为）。"
 
 !insertmacro MUI_LANGUAGE "English"
 LangString DISPLAYNAME ${LANG_ENGLISH} "Weasel"
@@ -109,10 +119,35 @@ LangString LNKFORUNINSTALL ${LANG_ENGLISH} "Uninstall Weasel"
 LangString CONFIRMATION ${LANG_ENGLISH} "Before installation, please uninstall the old version of Weasel.$\n$\nPress 'OK' to remove the old version, or 'Cancel' to abort installation."
 LangString SYSTEMVERSIONNOTOK ${LANG_ENGLISH} "Your system not supported, minimium system required: Windows 8.1!"
 LangString AUTOCHKUPDATE ${LANG_ENGLISH} "Automatically check for updates?"
+LangString OPTPAGETITLE ${LANG_ENGLISH} "Installation Options"
+LangString OPTPAGESUBTITLE ${LANG_ENGLISH} "Configure input method behavior"
+LangString OPTLEFTSHIFT ${LANG_ENGLISH} "Use left Shift key to toggle Chinese/English (recommended)"
+LangString OPTLEFTSHIFTDESC ${LANG_ENGLISH} "Checked: a single tap of the left Shift key toggles between Chinese and English; the right Shift key no longer toggles.$\nUnchecked: both Shift keys toggle Chinese/English (RIME default behavior)."
 
 ;--------------------------------
 
+; Installer option: left Shift key toggles Chinese/English
+Var LeftShiftCheckbox
+Var LeftShiftEnabled
+
+Function OptionsPageCreate
+  !insertmacro MUI_HEADER_TEXT "$(OPTPAGETITLE)" "$(OPTPAGESUBTITLE)"
+  nsDialogs::Create 1018
+  Pop $0
+  ${NSD_CreateCheckbox} 0u 20u 100% 12u "$(OPTLEFTSHIFT)"
+  Pop $LeftShiftCheckbox
+  ${NSD_SetState} $LeftShiftCheckbox ${BST_CHECKED}
+  ${NSD_CreateLabel} 0u 40u 100% 30u "$(OPTLEFTSHIFTDESC)"
+  Pop $0
+  nsDialogs::Show
+FunctionEnd
+
+Function OptionsPageLeave
+  ${NSD_GetState} $LeftShiftCheckbox $LeftShiftEnabled
+FunctionEnd
+
 Function .onInit
+  StrCpy $LeftShiftEnabled 1
   ; if not version >= 8.1, quit and MessageBox(if not silent)
   ${IfNot} ${AtLeastWin8.1}
     IfSilent toquit
@@ -306,6 +341,26 @@ program_files:
   StrCpy $R2 "/t"
 
   ExecWait '"$INSTDIR\WeaselSetup.exe" $R2'
+
+  ; Left Shift toggle option: if unchecked, restore Rime default
+  ; (both Shift keys toggle) via user-dir override, before deployment
+  ${If} $LeftShiftEnabled == 0
+    ReadRegStr $R5 HKCU "Software\Rime\Weasel" "RimeUserDir"
+    ${If} $R5 == ""
+      StrCpy $R5 "$APPDATA\Rime"
+    ${EndIf}
+    CreateDirectory "$R5"
+    ${If} ${FileExists} "$R5\default.custom.yaml"
+      CopyFiles /SILENT "$R5\default.custom.yaml" "$R5\default.custom.yaml.bak"
+    ${EndIf}
+    FileOpen $R6 "$R5\default.custom.yaml" w
+    ${If} $R6 != ""
+      FileWrite $R6 "patch:$\r$\n"
+      FileWrite $R6 "  ascii_composer/switch_key/Shift_L: commit_code$\r$\n"
+      FileWrite $R6 "  ascii_composer/switch_key/Shift_R: commit_code$\r$\n"
+      FileClose $R6
+    ${EndIf}
+  ${EndIf}
 
   ; Write the uninstall keys for Windows
   WriteRegStr HKLM "${REG_UNINST_KEY}" "DisplayName" "$(DISPLAYNAME)"

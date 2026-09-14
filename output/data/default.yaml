@@ -61,8 +61,8 @@ recognizer:
 ascii_composer:
   good_old_caps_lock: true
   switch_key:
-    Shift_L: inline_ascii
-    Shift_R: commit_text
+    Shift_L: commit_code    # 左 Shift:切换中英文
+    Shift_R: noop           # 右 Shift:不切换,保留原键功能
     Control_L: noop
     Control_R: noop
     Caps_Lock: clear
