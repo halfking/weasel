@@ -1,0 +1,7 @@
+# 五笔·拼音混输 + 左 Shift 切换中英文
+patch:
+  schema_list:
+    - schema: wubi_pinyin
+  # 中英文切换：仅左 Shift 切换；右 Shift 不再触发切换
+  ascii_composer/switch_key/Shift_L: commit_code
+  ascii_composer/switch_key/Shift_R: noop
