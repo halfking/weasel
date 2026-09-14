@@ -1,0 +1,44 @@
+# Rime default settings (shared data for Squirrel / macOS)
+# encoding: utf-8
+
+config_version: '0.50'
+
+schema_list:
+  - schema: wubi_pinyin
+
+switcher:
+  caption: 〔方案選單〕
+  hotkeys:
+    - Control+grave
+    - Control+Shift+grave
+    - F4
+  save_options:
+    - full_shape
+    - ascii_punct
+    - simplification
+    - extended_charset
+  fold_options: true
+  abbreviate_options: true
+  option_list_separator: '／'
+
+menu:
+  page_size: 6
+
+punctuator:
+  import_preset: default
+
+recognizer:
+  import_preset: default
+
+key_binder:
+  import_preset: default
+
+ascii_composer:
+  good_old_caps_lock: true
+  switch_key:
+    Shift_L: commit_code    # 左 Shift:切换中英文
+    Shift_R: noop           # 右 Shift:不切换,保留原键功能
+    Control_L: noop
+    Control_R: noop
+    Caps_Lock: clear
+    Eisu_toggle: clear
