@@ -19,3 +19,77 @@ package/*.xml
 *~
 .*.swp
 .DS_Store
+
+# ---------------------------------------------------------------------------
+# Windows / MSVC 本地构建产物（不入仓）
+#
+# 背景：本仓的正式发布物在 output/ 下是【受版本控制】的（output/7z.dll、
+# output/WinSparkle.dll、output/data/default.yaml 等）。但 Windows 侧用
+# MSVC 构建时会在同一批目录里额外产出 exe/exp/lib/pdb、rime/weasel 的 dll、
+# 从 plum 拉下来的 RIME 词库与方案，以及本地构建配置脚本。
+#
+# 这些都不是源码，提交上去只会让工作树长期脏、且把二进塞进仓库。
+# 下面的规则刻意写得**逐条精确**，不用 *.exe / *.dll / *.lib 这类宽通配 ——
+# 因为 output/7z.exe、output/7z.dll、lib64/WinSparkle.lib 都是受控文件，
+# 宽通配会让「哪些是发布物、哪些是构建物」这条线糊掉。
+# ---------------------------------------------------------------------------
+
+# MSVC 中间产物目录
+/x64/
+x64/
+/WeaselUI/msbuild/
+/lib64/
+
+# 调试符号 / 链接中间件（仓内没有任何受控 .pdb/.exp）
+*.pdb
+*.exp
+*.ilk
+
+# 构建产物（按名字精确列出，避免误伤受控的 7z.dll / WinSparkle.dll）
+/output/Weasel*.exe
+/output/Weasel*.lib
+/output/Win32/Weasel*.exe
+/output/Win32/Weasel*.lib
+/output/weasel.dll
+/output/weasel.lib
+/output/weaselx64.dll
+/output/weaselx64.lib
+/output/rime.dll
+/output/rime.pdb
+/output/Win32/rime.dll
+/output/Win32/rime.pdb
+/output/rime-install.bat
+/output/LICENSE.txt
+/output/README.txt
+/output/archives/weasel-*.exe
+
+# 从 plum / rime-data 拉下来的方案与词库（仓内自带的是 default/pinyin_simp/weasel/wubi*）
+/output/data/bopomofo*.yaml
+/output/data/cangjie5*
+/output/data/detenele.schema.yaml
+/output/data/essay.txt
+/output/data/key_bindings.yaml
+/output/data/luna_pinyin*
+/output/data/luna_quanpin.schema.yaml
+/output/data/pinyin.yaml
+/output/data/punctuation.yaml
+/output/data/stroke.*
+/output/data/symbols.yaml
+/output/data/terra_pinyin*
+/output/data/zhuyin.yaml
+/output/data/opencc/
+
+# librime 子模块的头文件副本（真身在 librime/ 子模块里）
+/include/rime_api.h
+/include/rime_api_deprecated.h
+/include/rime_api_stdbool.h
+/include/rime_levers_api.h
+
+# 本机构建配置（含本机绝对路径，不可入库）
+/env.bat
+/weasel.props
+/msbuild.log
+/7z.exe
+
+# IDE 计划草稿
+/.zcode/
